@@ -1,0 +1,77 @@
+import pandas as pd
+df = pd.read_csv('/content/ICICIBANK.csv')
+df
+# Rearrange the columns (example: B, C, A order)
+df = df[['Date','Prev Close',	'Open',	'High',	'Low',	'Last','Close',	'VWAP']]
+
+# Save the modified DataFrame to a new CSV file
+df.to_csv('modified_dataset.csv', index=False)
+df
+# Assuming 'df' is your DataFrame with the 'Date' column
+# Convert the 'Date' column to a pandas datetime object
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Extract relevant date features
+df['Year'] = df['Date'].dt.year
+df['Month'] = df['Date'].dt.month
+df['Day'] = df['Date'].dt.day
+df['Day_of_Week'] = df['Date'].dt.dayofweek  # Monday is 0 and Sunday is 6
+
+# Drop the original 'Date' column as it's no longer needed
+df = df.drop('Date', axis=1)
+#input and output
+x=df.iloc[:,0:7].values
+y=df.iloc[:,6:7].values
+print(y)
+print(x)
+df.shape
+#train&test
+from sklearn.model_selection import train_test_split
+x_Train,x_Test,y_Train,y_Test=train_test_split(x,y,random_state=0)
+print(x.shape)
+print(x_Train.shape)
+print(x_Test.shape)
+print(y.shape)
+print(y_Train.shape)
+print(y_Test.shape)
+# Install XGBoost
+# pip install xgboost
+
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error
+
+# Create an XGBoost regressor
+model = xgb.XGBRegressor(objective='reg:squarederror', colsample_bytree=0.3, learning_rate=0.1,
+                         max_depth=5, alpha=10, n_estimators=100, random_state=42)
+
+# Train the model
+model.fit(x_Train, y_Train)
+
+# Make predictions on the test set
+predictions = model.predict(x_Test)
+
+# Evaluate the model
+mse = mean_squared_error(y_Test, predictions)
+print(f'Mean Squared Error on Test Set: {mse}')
+from sklearn.metrics import r2_score
+
+# Assuming 'y_test' is the actual target variable and 'predictions' are the predicted values
+r_squared = r2_score(y_Test, predictions)
+
+print(f'R-squared: {r_squared}')
+import matplotlib.pyplot as plt
+
+# Plotting the scatter plot
+plt.figure(figsize=(10, 6))
+plt.scatter(y_Test, predictions, color='blue', label='Actual vs. Predicted')
+
+# Plotting the diagonal line for reference
+plt.plot([min(y_Test), max(y_Test)], [min(y_Test), max(y_Test)], linestyle='--', color='red', label='Perfect Prediction')
+
+# Adding labels and title
+plt.xlabel('Actual Closing Prices')
+plt.ylabel('Predicted Closing Prices')
+plt.title('Actual vs. Predicted Closing Prices')
+plt.legend()
+plt.grid(True)
+plt.show()
